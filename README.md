@@ -1,17 +1,32 @@
 # deef
-一个react、redux的简单、灵活、健壮的业务开发框架
+基于redux、react函数式组件，简单、健壮、强代码组织的框架
 
-## Concepts
-- 状态决定展现：model中的状态是组件动态展现的唯一标准，UI组件只需要关注简单的渲染流（pure function，没有lifecycle和内部state）
-- 交互就是改状态：**交互的达成，就是响应一个个用户事件**，进而改变model中的状态，最后表现为UI渲染
-- 只有callback、render两个概念+简化封装的redux，交互流、数据流、渲染流一一对应，逻辑清晰统一
+deef从“响应一个个用户事件”出发，进而抽象成状态数据及数据流转，最后表现成UI渲染，达成交互
+
 
 ## 代码分层：
-- model：只维护状态，定义展现依赖的状态数据（state）及改状态的接口（reducer）
-- UI：纯函数组件（stateless functional component）输入state、callbacks的render方法
-- getUIState: 从model中计算出UI展现依赖的state
-- callbacks：包含一个个用来响应用户事件来的回调方法，屏蔽this的plain object
-- *connect：将UI、getUIState、callbacks打包得到一个可以支持具体业务的独立组件*
+状态决定展现，交互就是改状态：model state => UI render => callback handler => model reducer
+- model：定义状态和改状态的接口
+- getUIState：从model中取UI展现依赖的状态
+- UI：函数式组件，渲染界面并暴露出用户交互的callbacks
+- callbacks：响应处理一个个用户事件
+- *connect(getUIState, callbacks)(UI)：打包得到一个可以支持具体业务的组件*
+
+
+## 特点
+- 概念少，逻辑清晰统一，代码组织约束性强，对新人友好
+- 代码颗粒度更小，函数式编程，不使用this，复用组合更灵活
+- 相比class component，UI组件就是单纯的render逻辑
+    - 没有生命周期、组件内部state对数据流的干扰，交互响应流->状态数据流->UI渲染流是一一对应的
+    - 纯函数，没有this上下文依赖，不易出错，方便复用组合
+    - 极大地与react解耦
+
+
+### 代码组织强约束
+- 分层清晰，职责分明，数据类型约束性强
+- 限制了UI中拿不到dispatch，dispatch只可能在callbacks中使用
+- callbacks屏蔽了this，支持命名规范检查，如限制必须onXXX
+
 
 ## Demo
 
@@ -128,15 +143,15 @@ require('app').connect(getUIState, callbacks)(UI)
     - UI.js 或 UI/(index.js+Section.ui.js)
     - style.less与UI.js或UI/index.js同层级，直接在UI中引入
     - config.js 该层级及以下公共配置
-    - handler // 可复用，或需要外部调用的一部分callback方法
+    - handler // 可复用的callback handler，或者暴露给外部调用的方法
     - selector // 可复用的一部分getUIState逻辑
     - common // 该层级及以下公共的东西
     - components 下级组件
 
 ### UI
 - 使用纯函数，保持简单纯粹的渲染逻辑
-- 显式列出所有依赖的state和callbacks，不可在业务中使用props.xxx
-- 最先解构ownProps，再结构state，再解构callbacks，callbacks比较多时，单独解构callbacks
+- 从props中显式列出所有state和callbacks，不可在业务中使用props.xxx
+- 最先解构ownProps，再解构state，再解构callbacks，callbacks比较多时，单独解构callbacks
 - 渲染dom逻辑外，仅可出现整理下层组件props的逻辑，杜绝在UI中定义callback，再简单的callback也要放到connect
 - callback依赖ownProps时，使用_.partial注入
 - UI中不可直接使用config的值，必须从props传入
@@ -147,21 +162,12 @@ require('app').connect(getUIState, callbacks)(UI)
 - 可复用的从model中取具体业务含义的值的逻辑放到selector.js中去，export的每一项是function getXXX()
 
 ### callbacks
-- 不可使用this，plan object，每一项是function({dispatch, getState}, …args)，标识符命名为onXXX的形式
-- 可复用，或者需要外部调用的callback方法应放到handler.js中，export的每一项是function({dispatch, getState}, …args)，标识符为动词短语；此外可export.callbacks = {...};
+- plan object，不可使用this，每一项是onXXX({dispatch, getState}, …args){}
+- 可复用的callback handler，或者暴露给外部调用的方法应放到handler.js中，export的每一项是function({dispatch, getState}, …args)，标识符为动词短语；此外可export.callbacks = {...};
 
 ## 性能
 - 基于[react-redux-hk](https://github.com/homkai/react-redux-hk)，自动分析getUIState依赖的state，依赖的state没有改变时，不会重新计算getUIState，不会触发UI的re-render
 
-## 优势
-- 代码颗粒度更小，函数式编程，不使用this，复用组合更灵活
-- 相比传统的react class component，deef的UI组件就是单纯的render逻辑（react方面只需要会jsx语法就行），上手难度更低
-    - 没有生命周期、组件内部state对数据流、渲染流的干扰，只有model -> getUIState -> UI -> callbacks -> model这一条单向流，使得编码思路更简单清晰
-    - 纯函数，不使用this，不容易出错，对结果更可控，更方便测试
-    - deef对代码组织有很强的约束作用，分层职责分明，想乱写都不容易（在UI中拿不到dispatch，无法改变model的值），整个团队的编码统一和代码质量更可控
-- 交互响应流->状态数据流->UI渲染流是一一对应的，deef从“响应一个个用户事件”出发，进而抽象成状态及状态流转，表现成UI渲染，这使得将现实问题转为编码实现更符合人的认知，成本更低
-- deef跟redux的思路更相投，更强调整个顶层组件的数据流、渲染流，没有下层组件实例的概念
-- 极大地与react解耦，如果有性能更高的UI渲染库实现，可以很低成本迁移业务代码
 
 ## 配套
 - [deef-router](https://github.com/homkai/deef-router)，参考examples/todomvc
