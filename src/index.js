@@ -5,7 +5,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {createStore, applyMiddleware, compose, combineReducers} from 'redux';
-import {Provider, connect as hkConnect} from 'react-redux';
+import {Provider, connect as hkConnect} from 'react-redux-hk';
 import handleActions from './handleActions';
 
 import isPlainObject from 'lodash-es/isPlainObject';
