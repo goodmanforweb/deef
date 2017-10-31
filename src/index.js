@@ -42,7 +42,8 @@ export default function (opts = {}) {
         // methods
         model,
         start,
-        connect
+        connect,
+        getProvider: null
     };
     return app;
 
@@ -127,12 +128,14 @@ export default function (opts = {}) {
         // inject model after start
         this.model = injectModel.bind(this, createReducer);
 
+        this.getProvider = getProvider.bind(this);
+
         // If has container, render; else, return react component
         if (container) {
-            render(container, store, RootComponent, onRendered);
-            event.on('hmr', Component => render.call(this, container, store, Component, onRendered));
+            render.call(this, container, RootComponent, onRendered);
+            event.on('hmr', Component => render.call(this, container, Component, onRendered));
         } else {
-            return getProvider(store, RootComponent);
+            return getProvider(RootComponent);
         }
     }
 
@@ -192,7 +195,8 @@ export default function (opts = {}) {
 
     ////////////////////////////////////
     // Helpers
-    function getProvider(store, RootComponent) {
+    function getProvider(RootComponent) {
+        const store = app._store;
         return () => (
             <Provider store={store}>
                 <RootComponent />
@@ -200,11 +204,11 @@ export default function (opts = {}) {
         );
     }
 
-    function render(container, store, RootComponent, cb = noop) {
+    function render(container, RootComponent, cb = noop) {
         ReactDOM.render(
-            React.createElement(getProvider(store, RootComponent)),
+            React.createElement(getProvider(RootComponent)),
             container,
-            cb.bind(null, store)
+            cb.bind(null, app._store)
         );
     }
 
