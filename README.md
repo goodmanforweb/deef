@@ -171,6 +171,7 @@ require('app').connect(getUIState, callbacks)(UI)
 
 ## 配套
 - [deef-router](https://github.com/homkai/deef-router)，参考examples/todomvc
+- [deef-plugin-connect-with-context](https://github.com/homkai/deef-plugin-connect-with-context)，deef plugin 基于deef形式构建大型公共业务组件
 
 ## 使用
 - [百度信息流推广平台](http://feedads.baidu.com)
