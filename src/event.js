@@ -22,7 +22,7 @@ class Event {
     }
 
     off(type, handler) {
-        this.hooks[type] = this.hooks[type].filter(fn => fn !== handler);
+        this.hooks[type] = handler ? this.hooks[type].filter(fn => fn !== handler) : [];
     }
 
     trigger(type, args) {

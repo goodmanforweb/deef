@@ -139,19 +139,38 @@ export default function (opts = {}) {
         }
     }
 
-    function buildHandler(handler, actionMeta = {}) {
+    function buildHandler(handler, key) {
+        const actionMeta = {
+            _callback: key
+        };
         return (...args) => {
+            let prevState = app._store.getState();
+            let errAction;
+
+            const triggerError = err => {
+                const context = {
+                    callback: key,
+                    action: errAction,
+                    prevState,
+                    state: app._store.getState()
+                };
+                event.trigger('error', [err, context]);
+            };
+
             try {
-                return handler.call(null, {
+                const ret = handler.call(null, {
                     getState: app._store.getState,
                     dispatch: (action) => {
+                        prevState = app._store.getState();
+                        errAction = action;
                         action.meta = {...actionMeta, ...(action.meta || {})};
                         app._store.dispatch(action);
                     }
                 }, ...args);
+                return ret instanceof Promise ? ret.catch(triggerError) : ret;
             }
             catch (err) {
-                event.trigger('error', [err]);
+                triggerError(err);
             }
         };
     }
@@ -176,7 +195,7 @@ export default function (opts = {}) {
                         'deef->connect: callbacks\'s each item should be function, but found ' + key
                     );
                     event.trigger('injectCallback', [key, callbacks[key]]);
-                    initializedCallbacks[key] = buildHandler(callbacks[key], {_callback: key});
+                    initializedCallbacks[key] = buildHandler(callbacks[key], key);
                 });
                 callbacks.initializedCallbacks = initializedCallbacks;
             }

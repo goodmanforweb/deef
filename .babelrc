@@ -1,14 +1,18 @@
 {
-  "presets": [[
-    "babel-preset-env",
-    {
-      "targets": {
-        "chrome": 45,
-        "ie": 10
+  "presets": [
+    "react",
+    [
+      "env", {
+        "targets": {
+          "chrome": 45,
+          "ie": 10
+        },
+        "modules": "umd"
       }
-    }
-  ], "react"],
+    ]
+  ],
   "plugins": [
-    "transform-object-rest-spread"
+    "transform-object-rest-spread",
+    "transform-async-to-generator"
   ]
 }
